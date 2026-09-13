@@ -8,6 +8,9 @@ openai = "*"
 dotenv = "*"
 tiktoken = "*"
 transformers = "*"
+pydantic = "*"
+fastapi = "*"
+uvicorn = "*"
 
 [dev-packages]
 

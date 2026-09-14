@@ -5,6 +5,7 @@ from openai import OpenAI
 
 dotenv.load_dotenv()
 
+
 class ChatBot:
     MODEL = 'openrouter/free'
     MAX_HISTORY_MESSAGES = 10
@@ -48,7 +49,8 @@ class ChatBot:
         if len(other_messages) < self.SUMMARIZE_EVERY:
             return
         split_point = len(other_messages) // 2
-        early_messages, recent_messages = other_messages[:split_point], other_messages[split_point:]
+        early_messages, recent_messages = other_messages[:
+                                                         split_point], other_messages[split_point:]
         try:
             response = self.llm.chat.completions.create(
                 model=self.MODEL,
@@ -69,11 +71,13 @@ class ChatBot:
             m for m in system_messages
             if not m['content'].startswith('Summary of earlier conversation:')
         ]
-        self.messages = [*base_system_messages, summarized_message, *recent_messages]
+        self.messages = [*base_system_messages,
+                         summarized_message, *recent_messages]
 
     def stream_reply(self, message: str):
         self.messages.append({'role': 'user', 'content': message})
-        prompt_tokens_est = sum(self.count_tokens(m['content']) for m in self.messages)
+        prompt_tokens_est = sum(self.count_tokens(
+            m['content']) for m in self.messages)
         if self.total_tokens + prompt_tokens_est > self.TOTAL_TOKEN_LIMIT:
             self.messages.pop()
             yield "⛔ محدودیت توکن جلسه فعلی به پایان رسیده است."
@@ -92,7 +96,7 @@ class ChatBot:
 
         response_text = ""
         is_thinking = False
-        
+
         for chunk in response:
             if not chunk.choices or not chunk.choices[0].delta:
                 continue
@@ -109,9 +113,11 @@ class ChatBot:
                 response_text += delta
                 yield delta
 
-        clean_response = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL).strip()
+        clean_response = re.sub(r'<think>.*?</think>',
+                                '', response_text, flags=re.DOTALL).strip()
         if clean_response:
-            self.messages.append({'role': 'assistant', 'content': clean_response})
+            self.messages.append(
+                {'role': 'assistant', 'content': clean_response})
             if hasattr(response, 'usage') and response.usage:
                 self.total_tokens += response.usage.total_tokens
                 self.input_tokens += response.usage.prompt_tokens
@@ -135,7 +141,8 @@ class ChatBot:
 
     def chat(self):
         while True:
-            user_input = input('Ask something ... (type "q" to terminate): ').strip()
+            user_input = input(
+                'Ask something ... (type "q" to terminate): ').strip()
             if user_input.lower() == 'q':
                 print("Good luck")
                 break
@@ -151,13 +158,15 @@ class ChatBot:
         for message in self.messages:
             print(message)
         print(f"Consumed tokens: {self.total_tokens}")
-        print(f"Estimated cost: ${(self.input_tokens * 0.05 + self.output_tokens * 0.08) / 1_000_000}")
+        print(
+            f"Estimated cost: ${(self.input_tokens * 0.05 + self.output_tokens * 0.08) / 1_000_000}")
 
 
 def main():
     bot = ChatBot()
     bot.chat()
     bot.report()
+
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-# AzChat
+# LLMChat
 
 A simple LLM-powered chatbot built as the first project of an AI Engineering course. Connects to free models via [OpenRouter](https://openrouter.ai), with conversation memory, automatic history summarization, token-by-token streaming, and a token budget limit.
 
@@ -29,7 +29,7 @@ Get a free key at [openrouter.ai/settings/keys](https://openrouter.ai/settings/k
 ## Usage
 
 ```bash
-pipenv run python chat_bot.py
+pipenv run python core/chat_bot.py
 ```
 
 Type your message and press Enter. Type `q` to quit; a final token/cost report is printed on exit.
@@ -40,6 +40,37 @@ To see which free models are currently available on your OpenRouter account:
 pipenv run python list_models.py
 ```
 
+To run the web interface:
+
+```bash
+pipenv run uvicorn web.api:app --reload
+```
+
+Then open `http://127.0.0.1:8000` in a browser. The web API exposes:
+
+- `POST /chat` — streams responses over Server-Sent Events and emits a session ID
+- `POST /reset` — resets a session
+- `GET /report/{session_id}` — returns session token and cost information
+
+## Project Structure
+
+```text
+core/                 Core chatbot logic
+  chat_bot.py         OpenRouter streaming chatbot
+  memory.py           Planned memory abstraction
+  token_budget.py     Planned token-budget abstraction
+web/                  FastAPI backend and frontend
+  api.py              Chat, reset, and report endpoints
+  session_manager.py  Planned session abstraction
+  static/index.html   Browser chat interface
+structured/            Planned structured output and tool calling
+rag/                   Planned embeddings, vector store, and retrieval
+agents/                Planned agents, MCP client, and tools
+observability/         Planned logging, metrics, and evaluation
+deployment/            Planned Docker and CI configuration
+tests/                 Test directory
+```
+
 ## Notes
 
 - The default model is `openrouter/free`, a router that automatically picks among available free models — useful because any single free model can get rate-limited or geo-restricted upstream.
@@ -47,4 +78,9 @@ pipenv run python list_models.py
 
 ## Roadmap
 
-This is project 1 of a multi-part AI Engineering course; a minimal FastAPI web layer is planned as a follow-up so the bot can run outside the CLI.
+The current milestone includes the OpenRouter chatbot, token tracking, streaming usage capture, and a minimal FastAPI web interface with session-based SSE chat. The remaining architecture is scaffolded for incremental implementation:
+
+1. Complete the Phase 1 memory and token-budget modules.
+2. Extract session management from the web API.
+3. Add structured outputs and tool calling.
+4. Add RAG, agents, observability, and deployment support.

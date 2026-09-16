@@ -7,10 +7,11 @@ name = "pypi"
 openai = "*"
 dotenv = "*"
 tiktoken = "*"
-transformers = "*"
 pydantic = "*"
 fastapi = "*"
 uvicorn = "*"
+torch = "*"
+transformers = "*"
 
 [dev-packages]
 

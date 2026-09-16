@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from chat_bot import ChatBot
+from phase1_core.chat_bot import ChatBot
+from fastapi.staticfiles import StaticFiles
 
 
 app = FastAPI()
@@ -81,3 +82,6 @@ def report(session_id: str):
             6,
         ),
     }
+
+
+app.mount("/", StaticFiles(directory="phase2_web/static", html=True), name="static")

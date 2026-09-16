@@ -96,8 +96,12 @@ class ChatBot:
 
         response_text = ""
         is_thinking = False
+        usage = None
 
         for chunk in response:
+            chunk_usage = getattr(chunk, 'usage', None)
+            if chunk_usage:
+                usage = chunk_usage
             if not chunk.choices or not chunk.choices[0].delta:
                 continue
             delta = chunk.choices[0].delta.content
@@ -118,10 +122,10 @@ class ChatBot:
         if clean_response:
             self.messages.append(
                 {'role': 'assistant', 'content': clean_response})
-            if hasattr(response, 'usage') and response.usage:
-                self.total_tokens += response.usage.total_tokens
-                self.input_tokens += response.usage.prompt_tokens
-                self.output_tokens += response.usage.completion_tokens
+            if usage:
+                self.total_tokens += usage.total_tokens
+                self.input_tokens += usage.prompt_tokens
+                self.output_tokens += usage.completion_tokens
             else:
                 out_est = self.count_tokens(clean_response)
                 self.input_tokens += prompt_tokens_est

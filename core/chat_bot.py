@@ -3,6 +3,8 @@ import os
 import re
 from openai import OpenAI
 
+from nlp.intent_classifier import get_classifier
+
 dotenv.load_dotenv()
 
 
@@ -12,6 +14,20 @@ class ChatBot:
     SUMMARIZE_EVERY = 10
     TOTAL_TOKEN_LIMIT = 10_000
 
+    SYSTEM_PROMPTS = {
+        "technical_question": "you are a helpful assistant, Your name is AzChat. "
+            "Answer technical questions precisely and cite reasoning briefly.",
+        "code_request": "you are a helpful assistant, Your name is AzChat. "
+            "Focus on producing correct, runnable code with minimal but essential explanation.",
+        "casual_chat": "you are a helpful assistant, Your name is AzChat. "
+            "Keep tone casual and answers short.",
+        "complaint_or_error": "you are a helpful assistant, Your name is AzChat. "
+            "Be empathetic, ask for error details/logs if missing, and prioritize root-cause diagnosis.",
+    }
+    DEFAULT_SYSTEM_PROMPT = (
+        'you are a helpful assistant, Your name is AzChat, Give short and concise answers.'
+    )
+
     def __init__(self):
         self.llm = OpenAI(
             api_key=os.getenv('OPENROUTER_API_KEY'),
@@ -20,12 +36,13 @@ class ChatBot:
         self.messages = [
             {
                 'role': 'system',
-                'content': 'you are a helpful assistant, Your name is AzChat, Give short and concise answers.'
+                'content': self.DEFAULT_SYSTEM_PROMPT
             }
         ]
         self.total_tokens = 0
         self.input_tokens = 0
         self.output_tokens = 0
+        self.last_intent = None
 
     def count_tokens(self, text: str) -> int:
         if not text:
@@ -33,6 +50,24 @@ class ChatBot:
         char_estimate = len(text) / 4
         word_estimate = len(text.split()) * 1.3
         return max(1, round((char_estimate + word_estimate) / 2))
+
+    def classify_intent(self, message: str):
+        try:
+            classifier = get_classifier()
+            result = classifier.classify(message)
+            self.last_intent = result["intent"]
+            return result["intent"]
+        except Exception as e:
+            print(f"\n⚠️ intent classification skipped, error: {e}")
+            self.last_intent = None
+            return None
+
+    def apply_intent_prompt(self, intent: str):
+        prompt = self.SYSTEM_PROMPTS.get(intent, self.DEFAULT_SYSTEM_PROMPT)
+        for m in self.messages:
+            if m['role'] == 'system' and not m['content'].startswith('Summary of earlier conversation:'):
+                m['content'] = prompt
+                break
 
     def trim_messages(self, max_length=None):
         max_length = max_length or self.MAX_HISTORY_MESSAGES
@@ -75,6 +110,10 @@ class ChatBot:
                          summarized_message, *recent_messages]
 
     def stream_reply(self, message: str):
+        intent = self.classify_intent(message)
+        if intent:
+            self.apply_intent_prompt(intent)
+
         self.messages.append({'role': 'user', 'content': message})
         prompt_tokens_est = sum(self.count_tokens(
             m['content']) for m in self.messages)
@@ -162,6 +201,7 @@ class ChatBot:
         for message in self.messages:
             print(message)
         print(f"Consumed tokens: {self.total_tokens}")
+        print(f"Last intent: {self.last_intent}")
         print(
             f"Estimated cost: ${(self.input_tokens * 0.05 + self.output_tokens * 0.08) / 1_000_000}")
 

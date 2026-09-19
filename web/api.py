@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from phase1_core.chat_bot import ChatBot
+from core.chat_bot import ChatBot
 from fastapi.staticfiles import StaticFiles
 
 
@@ -76,6 +76,7 @@ def report(session_id: str):
         "session_id": session_id,
         "total_tokens": bot.total_tokens,
         "input_tokens": bot.input_tokens,
+        "last_intent": bot.last_intent,
         "output_tokens": bot.output_tokens,
         "estimated_cost_usd": round(
             (bot.input_tokens * 0.05 + bot.output_tokens * 0.08) / 1_000_000,
@@ -84,4 +85,4 @@ def report(session_id: str):
     }
 
 
-app.mount("/", StaticFiles(directory="phase2_web/static", html=True), name="static")
+app.mount("/", StaticFiles(directory="web/static", html=True), name="static")

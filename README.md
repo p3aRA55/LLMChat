@@ -8,6 +8,7 @@ A simple LLM-powered chatbot built as the first project of an AI Engineering cou
 - **Conversation memory** — full chat history is injected into every request
 - **Automatic summarization** — once history grows past a threshold, the older half is summarized by the model itself and replaced with a single system note, keeping token usage bounded
 - **Token-by-token streaming** of the response as it's generated
+- **Semantic response caching** — similar questions within the same session reuse a cached answer instead of making a redundant API call, which reduces latency and cost while preserving conversation context
 - **Token counting & budget limit** — an offline estimate (no external tokenizer calls) tracks usage per session and blocks new requests once a configured budget is exceeded
 
 ## Setup

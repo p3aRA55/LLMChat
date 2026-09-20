@@ -3,6 +3,7 @@ import os
 import re
 from openai import OpenAI
 
+from core.response_cache import ResponseCache
 from nlp.intent_classifier import get_classifier
 
 dotenv.load_dotenv()
@@ -16,13 +17,13 @@ class ChatBot:
 
     SYSTEM_PROMPTS = {
         "technical_question": "you are a helpful assistant, Your name is AzChat. "
-            "Answer technical questions precisely and cite reasoning briefly.",
+        "Answer technical questions precisely and cite reasoning briefly.",
         "code_request": "you are a helpful assistant, Your name is AzChat. "
-            "Focus on producing correct, runnable code with minimal but essential explanation.",
+        "Focus on producing correct, runnable code with minimal but essential explanation.",
         "casual_chat": "you are a helpful assistant, Your name is AzChat. "
-            "Keep tone casual and answers short.",
+        "Keep tone casual and answers short.",
         "complaint_or_error": "you are a helpful assistant, Your name is AzChat. "
-            "Be empathetic, ask for error details/logs if missing, and prioritize root-cause diagnosis.",
+        "Be empathetic, ask for error details/logs if missing, and prioritize root-cause diagnosis.",
     }
     DEFAULT_SYSTEM_PROMPT = (
         'you are a helpful assistant, Your name is AzChat, Give short and concise answers.'
@@ -39,6 +40,7 @@ class ChatBot:
                 'content': self.DEFAULT_SYSTEM_PROMPT
             }
         ]
+        self.response_cache = ResponseCache()
         self.total_tokens = 0
         self.input_tokens = 0
         self.output_tokens = 0
@@ -115,6 +117,16 @@ class ChatBot:
             self.apply_intent_prompt(intent)
 
         self.messages.append({'role': 'user', 'content': message})
+
+        cached_response = self.response_cache.lookup(message)
+        if cached_response is not None:
+            self.messages.append(
+                {'role': 'assistant', 'content': cached_response})
+            self.summarize_messages()
+            self.trim_messages()
+            yield cached_response
+            return
+
         prompt_tokens_est = sum(self.count_tokens(
             m['content']) for m in self.messages)
         if self.total_tokens + prompt_tokens_est > self.TOTAL_TOKEN_LIMIT:
@@ -170,6 +182,7 @@ class ChatBot:
                 self.input_tokens += prompt_tokens_est
                 self.output_tokens += out_est
                 self.total_tokens += prompt_tokens_est + out_est
+            self.response_cache.store(message, clean_response)
 
         self.summarize_messages()
         self.trim_messages()

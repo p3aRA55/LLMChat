@@ -10,12 +10,14 @@ tiktoken = "*"
 pydantic = "*"
 fastapi = "*"
 uvicorn = "*"
+python-multipart = "*"
 torch = "*"
 transformers = "*"
 sentence-transformers = "*"
 numpy = "*"
 
 [dev-packages]
+pytest = "*"
 
 [requires]
 python_version = "3.14"

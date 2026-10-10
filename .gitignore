@@ -9,5 +9,7 @@ __pycache__/
 
 .DS_Store
 
-semantic_analysis.py
-embedding.py
+Neon_codes/
+rag/data/
+
+!Neon_codes/main.py
